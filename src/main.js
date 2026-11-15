@@ -193,7 +193,7 @@ function buildMenu() {
     const cv = document.createElement('canvas');
     cv.width = cv.height = 144;
     const cx = cv.getContext('2d');
-    drawCharacter(cx, c, 68, 86, 40, 0, -0.3);
+    drawCharacter(cx, c, 72, 74, 50, 0, -0.3);
     const name = document.createElement('span');
     name.textContent = c.name;
     b.append(cv, name);

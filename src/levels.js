@@ -1,30 +1,37 @@
 // Les niveaux. Pour en ajouter un, copier un bloc et changer les valeurs.
 //   sky      : couleurs du ciel (haut, bas)
 //   decor    : 'clouds' | 'sun' | 'stars'
+//   paris    : couleurs de la tour Eiffel et des immeubles (enlever pour un monde sans Paris)
+//   obstacle : couleurs de la baguette (croûte, bord, entailles)
 //   speed    : vitesse de défilement
-//   gap      : hauteur du passage entre les obstacles (plus grand = plus facile)
+//   gap      : hauteur du passage entre les baguettes (plus grand = plus facile)
 //   spacing  : distance entre deux obstacles
 //   goal     : nombre d'obstacles à passer pour gagner le niveau
+const BAGUETTE = { color: '#e3a857', edge: '#b9772f', cut: '#f8dfae' };
+
 export const LEVELS = [
   {
-    id: 'bonbons', name: 'Vallée des bonbons',
-    sky: ['#9be7e0', '#fdf3c4'], decor: 'clouds',
-    ground: '#f4a261', groundTop: '#7bd389',
-    obstacle: { color: '#ff6f91', stripe: '#ffc2d1', cap: '#d94672' },
+    id: 'paris-matin', name: 'Paris le matin',
+    sky: ['#8fd3f4', '#fdeecb'], decor: 'clouds',
+    paris: { tower: '#7d6b63', wall: '#f3e6d0', roof: '#6f7f95', window: '#b9a98f', sparkle: false },
+    ground: '#9aa3ad', groundTop: '#7bd389',
+    obstacle: BAGUETTE,
     speed: 170, gap: 240, spacing: 330, goal: 10,
   },
   {
-    id: 'soir', name: 'Coucher de soleil',
+    id: 'paris-soir', name: 'Paris au coucher du soleil',
     sky: ['#ff9e7a', '#ffe0a3'], decor: 'sun',
-    ground: '#8d5a97', groundTop: '#c77dba',
-    obstacle: { color: '#5b3f8c', stripe: '#8a6bc0', cap: '#3d2866' },
+    paris: { tower: '#5a3d4f', wall: '#e9b79a', roof: '#6b4a6e', window: '#ffe9a8', sparkle: false },
+    ground: '#7a6a80', groundTop: '#c77dba',
+    obstacle: BAGUETTE,
     speed: 200, gap: 215, spacing: 310, goal: 15,
   },
   {
-    id: 'nuit', name: 'Nuit étoilée',
+    id: 'paris-nuit', name: 'Paris la nuit',
     sky: ['#141b4d', '#4a3f8f'], decor: 'stars',
+    paris: { tower: '#d9a441', wall: '#2c336b', roof: '#1b2050', window: '#ffe066', sparkle: true },
     ground: '#1f2a5c', groundTop: '#4f6bd6',
-    obstacle: { color: '#3ddbd9', stripe: '#b5fffb', cap: '#17a2a0' },
+    obstacle: BAGUETTE,
     speed: 230, gap: 195, spacing: 300, goal: 20,
   },
 ];

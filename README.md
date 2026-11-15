@@ -1,6 +1,6 @@
-# Vole, Pompon !
+# Vole à Paris !
 
-Un jeu pour iPhone / iPad où l'on tape sur l'écran pour faire voler un petit personnage entre des obstacles.
+Un jeu pour iPhone / iPad où l'on tape sur l'écran pour faire voler une petite fille kawaii au-dessus de Paris, entre des baguettes de pain.
 C'est une application web (PWA) : pas besoin de Mac ni de Xcode, elle s'ouvre dans Safari et peut
 s'installer sur l'écran d'accueil (bouton Partager → « Sur l'écran d'accueil ») pour jouer en plein écran, même hors ligne.
 
