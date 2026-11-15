@@ -1,6 +1,6 @@
 // Sauvegarde (personnage choisi, niveaux débloqués, meilleurs scores).
 const KEY = 'flappy-save-v1';
-const DEFAULTS = { char: 0, level: 0, unlocked: 0, best: {}, sound: true };
+const DEFAULTS = { char: 0, level: 0, unlocked: 0, best: {}, candies: 0, sound: true };
 
 export function loadSave() {
   try {

@@ -89,6 +89,8 @@ h2 {
   color: var(--paper);
 }
 
+.tag { margin: 0; padding: 2px 14px; border-radius: 999px; background: var(--paper); font-weight: 700; }
+
 .picker { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 640px; }
 .pick {
   display: flex;
@@ -144,4 +146,4 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 .card p { margin: 0; }
-.card p + p { font-size: 1rem; font-weight: 600; opacity: .75; }
+.card p:last-child { font-size: 1rem; font-weight: 600; opacity: .75; }

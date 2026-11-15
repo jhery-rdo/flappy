@@ -1,7 +1,7 @@
 // Réglages généraux du jeu. Toutes les distances sont en "unités de jeu" :
 // l'écran fait toujours 720 unités de haut, quelle que soit la taille de l'appareil.
 export const CONFIG = {
-  title: 'Vole à Paris !',
+  title: 'Le plus beau des vols',
   viewHeight: 720,
   gravity: 1700,        // force qui tire le personnage vers le bas
   flapVelocity: -520,   // élan vers le haut à chaque tape
@@ -10,4 +10,8 @@ export const CONFIG = {
   playerRadius: 30,
   hitboxScale: 0.75,    // < 1 = collisions plus gentilles
   obstacleWidth: 62,
+  hearts: 5,            // nombre de coeurs au début d'un niveau
+  invincibleTime: 1.5,  // secondes de protection après avoir perdu un coeur
+  bearRadius: 30,
+  candyRadius: 16,
 };

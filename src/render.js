@@ -220,3 +220,124 @@ export function drawConfetti(ctx, list, dt) {
     ctx.restore();
   }
 }
+
+const CANDY_COLORS = ['#ff5d8f', '#7b6cf6', '#2ec4b6', '#ff9f1c'];
+
+// Un petit bonbon emballé. `i` choisit sa couleur.
+export function drawCandy(ctx, x, y, r, time, i) {
+  const col = CANDY_COLORS[i % CANDY_COLORS.length];
+  ctx.save();
+  ctx.translate(x, y + Math.sin(time * 4 + i) * 4);
+  ctx.rotate(-0.4);
+  ctx.fillStyle = col;
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(s * r * 0.7, 0);
+    ctx.lineTo(s * r * 1.6, -r * 0.6);
+    ctx.lineTo(s * r * 1.6, r * 0.6);
+    ctx.fill();
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.85)';
+  ctx.lineWidth = r * 0.22;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.45, 0.3, 3.6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Un méchant ours kawaii brun, accroché à un ballon.
+export function drawBear(ctx, x, y, r) {
+  const dark = '#2b2140';
+  ctx.save();
+  ctx.translate(x, y);
+  // ballon
+  ctx.strokeStyle = 'rgba(43,33,64,.6)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.9);
+  ctx.lineTo(0, -r * 1.7);
+  ctx.stroke();
+  ctx.fillStyle = '#ef476f';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 2.3, r * 0.55, r * 0.68, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // corps et pattes
+  ctx.fillStyle = '#8b5a2b';
+  ctx.beginPath();
+  ctx.ellipse(0, r * 1.05, r * 0.6, r * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(s * r * 0.62, r * 0.8, r * 0.2, 0, Math.PI * 2);
+    ctx.arc(s * r * 0.35, r * 1.5, r * 0.22, 0, Math.PI * 2);
+    ctx.arc(s * r * 0.68, -r * 0.7, r * 0.32, 0, Math.PI * 2); // oreilles
+    ctx.fill();
+  }
+  ctx.fillStyle = '#d9a066';
+  ctx.beginPath();
+  ctx.ellipse(0, r * 1.1, r * 0.34, r * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(s * r * 0.68, -r * 0.7, r * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // tête
+  ctx.fillStyle = '#8b5a2b';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#d9a066';
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.35, r * 0.45, r * 0.34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255, 110, 150, .5)';
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(s * r * 0.65, r * 0.25, r * 0.15, r * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // yeux, sourcils fâchés, truffe et bouche boudeuse
+  ctx.fillStyle = dark;
+  ctx.strokeStyle = dark;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = r * 0.11;
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(s * r * 0.4, -r * 0.08, r * 0.11, r * 0.14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s * r * 0.62, -r * 0.48);
+    ctx.lineTo(s * r * 0.2, -r * 0.26);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.22, r * 0.13, r * 0.09, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = r * 0.07;
+  ctx.beginPath();
+  ctx.arc(0, r * 0.62, r * 0.13, 1.15 * Math.PI, 1.85 * Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Un coeur (plein ou vide) centré en (x, y).
+export function drawHeart(ctx, x, y, s, full) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  ctx.moveTo(0, s * 0.9);
+  ctx.bezierCurveTo(-s * 1.6, -s * 0.2, -s * 0.7, -s * 1.3, 0, -s * 0.45);
+  ctx.bezierCurveTo(s * 0.7, -s * 1.3, s * 1.6, -s * 0.2, 0, s * 0.9);
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = s * 0.4;
+  ctx.strokeStyle = 'rgba(43, 33, 64, .85)';
+  ctx.stroke();
+  ctx.fillStyle = full ? '#ff4d6d' : 'rgba(255,255,255,.45)';
+  ctx.fill();
+  ctx.restore();
+}

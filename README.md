@@ -1,4 +1,4 @@
-# Vole à Paris !
+# Le plus beau des vols
 
 Un jeu pour iPhone / iPad où l'on tape sur l'écran pour faire voler une petite fille kawaii au-dessus de Paris, entre des baguettes de pain.
 C'est une application web (PWA) : pas besoin de Mac ni de Xcode, elle s'ouvre dans Safari et peut

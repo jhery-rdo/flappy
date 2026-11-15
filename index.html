@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Vole à Paris">
+<meta name="apple-mobile-web-app-title" content="Le plus beau des vols">
 <meta name="theme-color" content="#2b2140">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-180.png">
-<title>Vole à Paris !</title>
+<title>Le plus beau des vols</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap">
 <link rel="stylesheet" href="style.css">
 <style>html { padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }</style>
@@ -23,11 +23,12 @@
   <button id="btn-home" hidden>Menu</button>
 
   <section id="menu" class="overlay">
-    <h1 id="title">Vole à Paris !</h1>
+    <h1 id="title">Le plus beau des vols</h1>
     <h2>Choisis ton personnage</h2>
     <div id="char-list" class="picker"></div>
     <h2>Choisis ton niveau</h2>
     <div id="level-list" class="picker"></div>
+    <p id="candy-total" class="tag"></p>
     <button id="btn-play" class="big">Jouer</button>
     <button id="btn-sound" class="pill">Son : oui</button>
   </section>
@@ -36,6 +37,7 @@
     <h1 id="end-title">Oups !</h1>
     <div class="card">
       <p id="end-score"></p>
+      <p id="end-candies"></p>
       <p id="end-best"></p>
     </div>
     <div class="row">

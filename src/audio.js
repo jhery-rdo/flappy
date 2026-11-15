@@ -25,6 +25,7 @@ function tone(freq, dur, type = 'sine', vol = 0.12, slide = 0) {
 export const SFX = {
   flap: () => tone(420, 0.12, 'sine', 0.1, 1.6),
   score: () => tone(880, 0.1, 'triangle', 0.12, 1.3),
+  candy: () => tone(1175, 0.09, 'sine', 0.1, 1.5),
   hit: () => tone(180, 0.3, 'sawtooth', 0.12, 0.4),
   win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.18, 'triangle', 0.12), i * 110)),
 };
