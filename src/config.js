@@ -10,6 +10,7 @@ export const CONFIG = {
   playerRadius: 30,
   hitboxScale: 0.65,    // < 1 = collisions plus gentilles
   obstacleWidth: 62,
+  unlockAll: true,      // true = tous les niveaux sont ouverts (pour tester) ; false = il faut les gagner dans l'ordre
   hearts: 5,            // nombre de coeurs au début d'un niveau
   invincibleTime: 2,  // secondes de protection après avoir perdu un coeur
   bearRadius: 30,

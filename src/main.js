@@ -271,7 +271,7 @@ function buildMenu() {
       label.textContent = l.world;
       levels.append(label);
     }
-    const locked = i > save.unlocked;
+    const locked = !CONFIG.unlockAll && i > save.unlocked;
     const b = document.createElement('button');
     b.className = 'pick';
     b.disabled = locked;
