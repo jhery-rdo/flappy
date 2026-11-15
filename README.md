@@ -21,6 +21,10 @@ Puis ouvrir http://localhost:8000
 | le nom du jeu, la gravité, la taille     | `src/config.js`     |
 | le dessin du décor et des obstacles      | `src/render.js`     |
 | les sons                                 | `src/audio.js`      |
+| les meubles de la maison                 | `src/furniture.js`  |
+| les animaux de compagnie                 | `src/pets.js`       |
+| les choix de l'atelier du personnage     | `src/creator.js`    |
+| la maison à New York (dehors et dedans)  | `src/house.js`      |
 | les règles du jeu et les menus           | `src/main.js`       |
 | l'apparence des menus                    | `style.css`         |
 

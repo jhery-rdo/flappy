@@ -1,7 +1,9 @@
 // Les personnages. Pour en ajouter un, copier un bloc et changer les valeurs.
 //   hairStyle : 'long' | 'couettes' | 'chignon' | 'queue'
 //   top.style : 'bedaine' (chandail court, on voit le ventre) | 'large' (grand chandail)
-//   bottom.style : 'short' | 'jogging'
+//   bottom.style : 'short' | 'jogging' | 'jupe'
+//   hairStyle peut aussi être 'court'
+//   accessory : 'aucun' | 'lunettes' | 'chapeau' | 'noeud' | 'serre-tete' | 'couronne' (+ accessoryColor)
 const BLOND = '#ffd84d';
 const SKIN = '#ffdcc2';
 const BLUE_EYES = '#3b9cff';
@@ -53,6 +55,9 @@ export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0) {
     ellipse(ctx, 0, hy - 0.8 * r, 0.3 * r, 0.28 * r);
   } else if (c.hairStyle === 'queue') {
     ellipse(ctx, -0.85 * r, hy + 0.1 * r, 0.24 * r, 0.6 * r, 0.5);
+  } else if (c.hairStyle === 'court') {
+    ellipse(ctx, -0.68 * r, hy + 0.12 * r, 0.16 * r, 0.3 * r, 0.2);
+    ellipse(ctx, 0.68 * r, hy + 0.12 * r, 0.16 * r, 0.3 * r, -0.2);
   }
 
   // jambes
@@ -68,7 +73,16 @@ export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0) {
   ctx.fillStyle = c.skin;
   box(ctx, -0.3 * r, 0.2 * r, 0.6 * r, 0.5 * r, 0.12 * r);
   ctx.fillStyle = c.bottom.color;
-  box(ctx, -0.33 * r, 0.56 * r, 0.66 * r, jog ? 0.2 * r : 0.26 * r, 0.08 * r);
+  if (c.bottom.style === 'jupe') {
+    ctx.beginPath();
+    ctx.moveTo(-0.32 * r, 0.54 * r);
+    ctx.lineTo(0.32 * r, 0.54 * r);
+    ctx.lineTo(0.48 * r, 0.9 * r);
+    ctx.quadraticCurveTo(0, 0.98 * r, -0.48 * r, 0.9 * r);
+    ctx.fill();
+  } else {
+    box(ctx, -0.33 * r, 0.56 * r, 0.66 * r, jog ? 0.2 * r : 0.26 * r, 0.08 * r);
+  }
   ctx.fillStyle = c.top.color;
   const large = c.top.style === 'large';
   if (large) box(ctx, -0.46 * r, 0.14 * r, 0.92 * r, 0.56 * r, 0.16 * r);
@@ -126,5 +140,72 @@ export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0) {
   ctx.arc(0, hy + 0.28 * r, 0.1 * r, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
 
+  drawAccessory(ctx, c, r, hy);
   ctx.restore();
+}
+
+function drawAccessory(ctx, c, r, hy) {
+  const col = c.accessoryColor || '#ff5d8f';
+  const dark = '#2b2140';
+  switch (c.accessory) {
+    case 'lunettes':
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 0.06 * r;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(s * 0.28 * r, hy + 0.12 * r, 0.19 * r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(-0.09 * r, hy + 0.08 * r);
+      ctx.quadraticCurveTo(0, hy + 0.02 * r, 0.09 * r, hy + 0.08 * r);
+      ctx.stroke();
+      break;
+    case 'chapeau':
+      ctx.fillStyle = col;
+      ellipse(ctx, 0, hy - 0.5 * r, 0.95 * r, 0.17 * r);
+      box(ctx, -0.48 * r, hy - 1.05 * r, 0.96 * r, 0.6 * r, 0.25 * r);
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ctx.fillRect(-0.48 * r, hy - 0.68 * r, 0.96 * r, 0.11 * r);
+      break;
+    case 'noeud':
+      ctx.fillStyle = col;
+      ctx.save();
+      ctx.translate(0.48 * r, hy - 0.58 * r);
+      ctx.rotate(0.3);
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 0.32 * r, -0.2 * r);
+        ctx.lineTo(s * 0.32 * r, 0.2 * r);
+        ctx.fill();
+      }
+      ctx.fillStyle = dark;
+      ctx.globalAlpha = 0.25;
+      ellipse(ctx, 0, 0, 0.09 * r, 0.09 * r);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      break;
+    case 'serre-tete':
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 0.1 * r;
+      ctx.beginPath();
+      ctx.arc(0, hy + 0.05 * r, 0.72 * r, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+      break;
+    case 'couronne':
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(-0.38 * r, hy - 0.6 * r);
+      ctx.lineTo(-0.42 * r, hy - 1.0 * r);
+      ctx.lineTo(-0.2 * r, hy - 0.8 * r);
+      ctx.lineTo(0, hy - 1.08 * r);
+      ctx.lineTo(0.2 * r, hy - 0.8 * r);
+      ctx.lineTo(0.42 * r, hy - 1.0 * r);
+      ctx.lineTo(0.38 * r, hy - 0.6 * r);
+      ctx.fill();
+      ctx.fillStyle = '#ff5d8f';
+      ellipse(ctx, 0, hy - 0.72 * r, 0.06 * r, 0.06 * r);
+      break;
+  }
 }

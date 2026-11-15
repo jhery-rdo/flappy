@@ -9,7 +9,7 @@ const out = resolve(process.argv[2] || `${root}/build/jeu.html`);
 const read = (p) => readFileSync(`${root}/${p}`, 'utf8');
 
 // Ordre = dépendances d'abord.
-const modules = ['config', 'characters', 'levels', 'storage', 'audio', 'render', 'main'];
+const modules = ['config', 'characters', 'levels', 'storage', 'audio', 'render', 'furniture', 'pets', 'creator', 'house', 'main'];
 const js = modules
   .map((m) => read(`src/${m}.js`).replace(/^import .*$/gm, '').replace(/^export /gm, ''))
   .join('\n');

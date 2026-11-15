@@ -29,7 +29,10 @@
     <h2>Choisis ton niveau</h2>
     <div id="level-list" class="picker"></div>
     <p id="candy-total" class="tag"></p>
-    <button id="btn-play" class="big">Jouer</button>
+    <div class="row">
+      <button id="btn-play" class="big">Jouer</button>
+      <button id="btn-house" class="big alt">Ma maison</button>
+    </div>
     <button id="btn-sound" class="pill">Son : oui</button>
   </section>
 
@@ -44,6 +47,35 @@
       <button id="btn-next" class="big">Niveau suivant</button>
       <button id="btn-retry" class="pill">Rejouer</button>
       <button id="btn-menu" class="pill">Menu</button>
+    </div>
+  </section>
+
+  <section id="house" class="screen" hidden>
+    <header class="bar">
+      <button id="house-out" class="pill">Menu</button>
+      <h2>Ma maison à New York</h2>
+    </header>
+    <nav id="house-tabs" class="tabs"></nav>
+    <div class="house-stage"><canvas id="house-canvas" aria-label="Ma maison"></canvas></div>
+    <div id="house-drawer" class="drawer"></div>
+  </section>
+
+  <section id="creator" class="screen" hidden>
+    <header class="bar">
+      <button id="cr-back" class="pill">Retour</button>
+      <h2>Crée ton personnage</h2>
+    </header>
+    <div class="cr-body">
+      <canvas id="cr-preview" aria-label="Ton personnage"></canvas>
+      <div class="cr-panel">
+        <div class="cr-row">
+          <h3>Son prénom</h3>
+          <input id="cr-name" class="name-input" maxlength="14" autocomplete="off">
+        </div>
+        <nav id="cr-tabs" class="tabs"></nav>
+        <div id="cr-options"></div>
+        <button id="cr-done" class="big">C’est fini !</button>
+      </div>
     </div>
   </section>
 </div>

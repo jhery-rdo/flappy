@@ -4,6 +4,8 @@ import { CHARACTERS, drawCharacter } from './characters.js';
 import { LEVELS } from './levels.js';
 import { loadSave, writeSave } from './storage.js';
 import { SFX, setSound } from './audio.js';
+import { openCreator } from './creator.js';
+import { openHouse, houseIsOpen } from './house.js';
 import { drawBackground, drawObstacle, drawGround, drawText, makeConfetti, drawConfetti, drawCandy, drawBear, drawHeart } from './render.js';
 
 const $ = (id) => document.getElementById(id);
@@ -14,7 +16,9 @@ let W = 400;          // largeur en unités de jeu (dépend de l'écran)
 let scale = 1;
 
 const save = loadSave();
-save.char = Math.min(save.char, CHARACTERS.length - 1);
+// La liste des personnages : ceux du jeu + celui qu'on a fabriqué.
+const allChars = () => (save.custom ? [...CHARACTERS, save.custom] : CHARACTERS);
+save.char = Math.min(save.char, allChars().length - 1);
 save.level = Math.min(save.level, LEVELS.length - 1);
 setSound(save.sound);
 
@@ -27,7 +31,7 @@ const game = {
 };
 
 const level = () => LEVELS[save.level];
-const character = () => CHARACTERS[save.char];
+const character = () => allChars()[save.char] || CHARACTERS[0];
 const groundY = () => H - CONFIG.groundHeight;
 
 function resize() {
@@ -236,8 +240,10 @@ let lastT = 0;
 function frame(t) {
   const dt = Math.min((t - lastT) / 1000 || 0, 1 / 30);
   lastT = t;
-  update(dt);
-  render(dt);
+  if (!houseIsOpen()) {
+    update(dt);
+    render(dt);
+  }
   requestAnimationFrame(frame);
 }
 
@@ -247,7 +253,7 @@ function buildMenu() {
   $('title').textContent = CONFIG.title;
   const chars = $('char-list');
   chars.replaceChildren();
-  CHARACTERS.forEach((c, i) => {
+  allChars().forEach((c, i) => {
     const b = document.createElement('button');
     b.className = 'pick';
     b.setAttribute('aria-pressed', i === save.char);
@@ -261,6 +267,14 @@ function buildMenu() {
     b.onclick = () => { save.char = i; writeSave(save); buildMenu(); };
     chars.append(b);
   });
+  const make = document.createElement('button');
+  make.className = 'pick make';
+  make.innerHTML = '<b aria-hidden="true">+</b>';
+  const label = document.createElement('span');
+  label.textContent = save.custom ? 'Modifier mon perso' : 'Crée ton perso';
+  make.append(label);
+  make.onclick = () => { $('menu').hidden = true; editCharacter(() => { $('menu').hidden = false; }); };
+  chars.append(make);
 
   const levels = $('level-list');
   levels.replaceChildren();
@@ -326,6 +340,21 @@ window.addEventListener('keydown', (e) => {
   if (game.state === 'ready' || game.state === 'playing') { e.preventDefault(); flap(); }
 });
 $('btn-play').onclick = startLevel;
+
+// Ouvre l'atelier du personnage ; en sortant, c'est lui qui est choisi.
+function editCharacter(then) {
+  openCreator(save, () => {
+    save.char = CHARACTERS.length;
+    writeSave(save);
+    buildMenu();
+    then?.();
+  });
+}
+
+$('btn-house').onclick = () => {
+  $('menu').hidden = true;
+  openHouse(save, character, editCharacter, () => showMenu());
+};
 $('btn-retry').onclick = startLevel;
 $('btn-next').onclick = () => { save.level++; writeSave(save); startLevel(); };
 $('btn-menu').onclick = showMenu;
