@@ -3,15 +3,15 @@
 export const CONFIG = {
   title: 'Le plus beau des vols',
   viewHeight: 720,
-  gravity: 1700,        // force qui tire le personnage vers le bas
-  flapVelocity: -520,   // élan vers le haut à chaque tape
-  maxFallSpeed: 760,
+  gravity: 1400,        // force qui tire le personnage vers le bas
+  flapVelocity: -470,   // élan vers le haut à chaque tape
+  maxFallSpeed: 650,
   groundHeight: 96,
   playerRadius: 30,
-  hitboxScale: 0.75,    // < 1 = collisions plus gentilles
+  hitboxScale: 0.65,    // < 1 = collisions plus gentilles
   obstacleWidth: 62,
   hearts: 5,            // nombre de coeurs au début d'un niveau
-  invincibleTime: 1.5,  // secondes de protection après avoir perdu un coeur
+  invincibleTime: 2,  // secondes de protection après avoir perdu un coeur
   bearRadius: 30,
   candyRadius: 16,
 };

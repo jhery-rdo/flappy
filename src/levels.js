@@ -20,7 +20,7 @@ export const LEVELS = [
     paris: { tower: '#7d6b63', wall: '#f3e6d0', roof: '#6f7f95', window: '#b9a98f', sparkle: false },
     ground: '#9aa3ad', groundTop: '#7bd389',
     obstacle: BAGUETTE,
-    speed: 170, gap: 240, spacing: 330, bearChance: 0.3, goal: 10,
+    speed: 140, gap: 290, spacing: 380, bearChance: 0.15, goal: 10,
   },
   {
     world: 'Paris', id: 'paris-soir', name: 'Paris au coucher du soleil',
@@ -28,7 +28,7 @@ export const LEVELS = [
     paris: { tower: '#5a3d4f', wall: '#e9b79a', roof: '#6b4a6e', window: '#ffe9a8', sparkle: false },
     ground: '#7a6a80', groundTop: '#c77dba',
     obstacle: BAGUETTE,
-    speed: 200, gap: 215, spacing: 310, bearChance: 0.5, goal: 15,
+    speed: 155, gap: 275, spacing: 365, bearChance: 0.25, goal: 12,
   },
   {
     world: 'Paris', id: 'paris-nuit', name: 'Paris la nuit',
@@ -36,7 +36,7 @@ export const LEVELS = [
     paris: { tower: '#d9a441', wall: '#2c336b', roof: '#1b2050', window: '#ffe066', sparkle: true },
     ground: '#1f2a5c', groundTop: '#4f6bd6',
     obstacle: BAGUETTE,
-    speed: 230, gap: 195, spacing: 300, bearChance: 0.7, goal: 20,
+    speed: 170, gap: 260, spacing: 355, bearChance: 0.35, goal: 15,
   },
   {
     world: 'New York', id: 'ny-matin', name: 'New York le matin',
@@ -44,7 +44,7 @@ export const LEVELS = [
     newyork: { far: '#a9bccf', near: '#7f93ab', window: '#dbe8f5', landmark: '#8a94a6', liberty: '#6fb8a3', lit: false },
     ground: '#5b6270', groundTop: '#9aa3ad',
     obstacle: HOTDOG,
-    speed: 210, gap: 215, spacing: 310, bearChance: 0.5, goal: 15,
+    speed: 160, gap: 270, spacing: 365, bearChance: 0.3, goal: 12,
   },
   {
     world: 'New York', id: 'ny-soir', name: 'New York au coucher du soleil',
@@ -52,7 +52,7 @@ export const LEVELS = [
     newyork: { far: '#c98a95', near: '#8b5d7a', window: '#ffe0a3', landmark: '#6e4762', liberty: '#5aa293', lit: false },
     ground: '#4a3d55', groundTop: '#8b6d9c',
     obstacle: HOTDOG,
-    speed: 235, gap: 200, spacing: 300, bearChance: 0.65, goal: 20,
+    speed: 175, gap: 255, spacing: 355, bearChance: 0.4, goal: 15,
   },
   {
     world: 'New York', id: 'ny-nuit', name: 'New York la nuit',
@@ -60,6 +60,6 @@ export const LEVELS = [
     newyork: { far: '#232a5e', near: '#161b45', window: '#ffe066', landmark: '#1c2254', liberty: '#3f8f80', lit: true },
     ground: '#14183a', groundTop: '#f2c94c',
     obstacle: HOTDOG,
-    speed: 255, gap: 190, spacing: 290, bearChance: 0.8, goal: 25,
+    speed: 190, gap: 245, spacing: 345, bearChance: 0.5, goal: 18,
   },
 ];

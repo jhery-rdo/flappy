@@ -48,7 +48,7 @@ function newGapY(prev) {
   const min = margin;
   const max = groundY() - margin;
   let y = min + Math.random() * (max - min);
-  if (prev != null) y = Math.max(prev - 230, Math.min(prev + 230, y)); // pas de saut impossible
+  if (prev != null) y = Math.max(prev - 170, Math.min(prev + 170, y)); // pas de saut impossible
   return y;
 }
 
@@ -172,7 +172,7 @@ function update(dt) {
     for (const b of game.bears) {
       b.x -= lv.speed * dt;
       b.y = b.baseY + Math.sin(game.time * 2 + b.phase) * 45;
-      if (near(p, b, pr + CONFIG.bearRadius * 0.8)) hurt();
+      if (near(p, b, pr + CONFIG.bearRadius * 0.7)) hurt();
     }
     game.candies = game.candies.filter((c) => {
       if (near(p, c, pr + CONFIG.candyRadius + 6)) { game.candyCount++; SFX.candy(); return false; }

@@ -10,7 +10,7 @@ const GREY = '#a9adb8';
 export const CHARACTERS = [
   { id: 'alix', name: 'Alix', hair: BLOND, hairStyle: 'long', eyes: BLUE_EYES, skin: SKIN,
     top: { style: 'bedaine', color: '#ff7eb6' }, bottom: { style: 'short', color: '#4f86d9' }, shoes: '#ffffff' },
-  { id: 'lily', name: 'Lily', hair: BLOND, hairStyle: 'couettes', eyes: BLUE_EYES, skin: SKIN,
+  { id: 'sophie', name: 'Sophie', hair: BLOND, hairStyle: 'couettes', eyes: BLUE_EYES, skin: SKIN,
     top: { style: 'large', color: '#b79cf2' }, bottom: { style: 'jogging', color: GREY }, shoes: '#ffffff' },
   { id: 'matilda', name: 'Matilda', hair: BLOND, hairStyle: 'chignon', eyes: BLUE_EYES, skin: SKIN,
     top: { style: 'large', color: '#63d6c0' }, bottom: { style: 'jogging', color: GREY }, shoes: '#ffffff' },
