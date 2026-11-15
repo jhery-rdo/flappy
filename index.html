@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pompon">
+<meta name="theme-color" content="#2b2140">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-180.png">
+<title>Vole, Pompon !</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>html { padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }</style>
+</head>
+<body>
+<!-- BODY:START -->
+<div id="app">
+  <canvas id="game" aria-label="Zone de jeu"></canvas>
+  <button id="btn-home" hidden>Menu</button>
+
+  <section id="menu" class="overlay">
+    <h1 id="title">Vole, Pompon !</h1>
+    <h2>Choisis ton personnage</h2>
+    <div id="char-list" class="picker"></div>
+    <h2>Choisis ton niveau</h2>
+    <div id="level-list" class="picker"></div>
+    <button id="btn-play" class="big">Jouer</button>
+    <button id="btn-sound" class="pill">Son : oui</button>
+  </section>
+
+  <section id="end" class="overlay" hidden>
+    <h1 id="end-title">Oups !</h1>
+    <div class="card">
+      <p id="end-score"></p>
+      <p id="end-best"></p>
+    </div>
+    <div class="row">
+      <button id="btn-next" class="big">Niveau suivant</button>
+      <button id="btn-retry" class="pill">Rejouer</button>
+      <button id="btn-menu" class="pill">Menu</button>
+    </div>
+  </section>
+</div>
+<!-- BODY:END -->
+<script type="module" src="src/main.js"></script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
