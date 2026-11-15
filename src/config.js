@@ -11,7 +11,8 @@ export const CONFIG = {
   hitboxScale: 0.65,    // < 1 = collisions plus gentilles
   obstacleWidth: 62,
   unlockAll: true,      // true = tous les niveaux sont ouverts (pour tester) ; false = il faut les gagner dans l'ordre
-  hearts: 5,            // nombre de coeurs au début d'un niveau
+  hearts: 5,
+  friendGift: 10,       // avec une amie : tous les 10 bonbons, elle te redonne un coeur            // nombre de coeurs au début d'un niveau
   invincibleTime: 2,  // secondes de protection après avoir perdu un coeur
   bearRadius: 30,
   candyRadius: 16,

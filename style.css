@@ -251,3 +251,6 @@ h2 {
 .meter-bar { flex: 1; height: 16px; border-radius: 999px; background: #eadfe6; overflow: hidden; }
 .meter-bar i { display: block; height: 100%; background: var(--candy); border-radius: 999px; }
 .pick.make b { display: grid; place-items: center; width: 72px; height: 72px; font-size: 3rem; line-height: 1; color: var(--candy); }
+.pick.small { width: 88px; }
+.pick.small canvas { width: 56px; height: 56px; }
+.pick.small b { display: grid; place-items: center; width: 56px; height: 56px; font-size: 1.6rem; color: var(--candy); }

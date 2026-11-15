@@ -26,6 +26,8 @@ setSound(save.sound);
 const game = {
   state: 'menu', time: 0, dist: 0, score: 0,
   player: { x: 0, y: H / 2, vy: 0 },
+  buddy: { x: 0, y: H / 2, vy: 0 },   // l'amie qui vole avec nous
+  toast: null,
   obstacles: [], candies: [], bears: [], confetti: [], endTimer: 0,
   hearts: CONFIG.hearts, invincible: 0, candyCount: 0, spawned: 0,
 };
@@ -33,6 +35,11 @@ const game = {
 const level = () => LEVELS[save.level];
 const character = () => allChars()[save.char] || CHARACTERS[0];
 const groundY = () => H - CONFIG.groundHeight;
+// L'amie choisie (jamais le même personnage que soi).
+const friend = () => {
+  if (!save.friend || save.friend === character().id) return null;
+  return allChars().find((c) => c.id === save.friend) || null;
+};
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -43,6 +50,7 @@ function resize() {
   scale = canvas.height / H;
   W = canvas.width / scale;
   game.player.x = Math.min(W * 0.3, 240);
+  game.buddy.x = Math.max(36, game.player.x - 78);
 }
 
 // ---------- Partie ----------
@@ -79,6 +87,36 @@ function hurt() {
   if (game.hearts <= 0) finish(false);
 }
 
+// Un bonbon ramassé (par soi ou par l'amie). Avec une amie, certains bonbons redonnent un coeur.
+function gotCandy() {
+  game.candyCount++;
+  SFX.candy();
+  const f = friend();
+  if (f && game.candyCount % CONFIG.friendGift === 0 && game.hearts < CONFIG.hearts) {
+    game.hearts++;
+    game.toast = { text: `${f.name} te donne un cœur !`, t: 1.8 };
+    SFX.win();
+  }
+}
+
+// L'amie vole toute seule : elle vise le milieu du prochain passage.
+function updateBuddy(dt, lv) {
+  const b = game.buddy;
+  const r = CONFIG.playerRadius;
+  b.vy = Math.min(b.vy + CONFIG.gravity * dt, CONFIG.maxFallSpeed);
+  b.y += b.vy * dt;
+  const next = game.obstacles.find((o) => o.x + CONFIG.obstacleWidth > b.x - 30);
+  const target = next ? next.gapY + 25 : H * 0.42;
+  if (b.y > target && b.vy > -80) b.vy = CONFIG.flapVelocity;
+  if (b.y < r) { b.y = r; b.vy = 0; }
+  if (b.y > groundY() - r) { b.y = groundY() - r; b.vy = CONFIG.flapVelocity; }
+  const reach = r * CONFIG.hitboxScale + CONFIG.candyRadius + 6;
+  game.candies = game.candies.filter((c) => {
+    if (near(b, c, reach)) { gotCandy(); return false; }
+    return true;
+  });
+}
+
 function near(a, b, dist) {
   return Math.hypot(a.x - b.x, a.y - b.y) < dist;
 }
@@ -96,6 +134,9 @@ function startLevel() {
   game.confetti = [];
   game.player.y = H * 0.45;
   game.player.vy = 0;
+  game.buddy.y = H * 0.38;
+  game.buddy.vy = 0;
+  game.toast = null;
   $('menu').hidden = true;
   $('end').hidden = true;
   $('btn-home').hidden = false;
@@ -144,6 +185,7 @@ function update(dt) {
   if (game.state === 'menu' || game.state === 'ready') {
     game.dist += lv.speed * 0.4 * dt;
     p.y = H * 0.45 + Math.sin(game.time * 3) * 10; // petit flottement
+    game.buddy.y = H * 0.38 + Math.sin(game.time * 3 + 1.5) * 10;
     return;
   }
 
@@ -179,10 +221,12 @@ function update(dt) {
       if (near(p, b, pr + CONFIG.bearRadius * 0.7)) hurt();
     }
     game.candies = game.candies.filter((c) => {
-      if (near(p, c, pr + CONFIG.candyRadius + 6)) { game.candyCount++; SFX.candy(); return false; }
+      if (near(p, c, pr + CONFIG.candyRadius + 6)) { gotCandy(); return false; }
       return c.x > -40;
     });
     game.bears = game.bears.filter((b) => b.x > -80);
+    if (friend()) updateBuddy(dt, lv);
+    if (game.toast && (game.toast.t -= dt) <= 0) game.toast = null;
 
     // toucher le sol : on perd un coeur et on rebondit
     if (p.y + pr >= groundY()) {
@@ -201,6 +245,7 @@ function update(dt) {
     game.dist += lv.speed * dt;
     p.y += (H * 0.4 - p.y) * Math.min(1, dt * 3);
   }
+  game.buddy.y += (H * 0.34 - game.buddy.y) * Math.min(1, dt * 3);
   if (game.endTimer > 0) {
     game.endTimer -= dt;
     if (game.endTimer <= 0) showEnd();
@@ -221,7 +266,14 @@ function render(dt) {
     const flying = game.state === 'playing' || game.state === 'dead';
     const angle = flying ? Math.max(-0.45, Math.min(1.2, p.vy / 600)) : 0;
     const blink = game.state === 'playing' && game.invincible > 0 && Math.floor(game.invincible * 10) % 2 === 0;
+    const f = friend();
+    if (f) {
+      const b = game.buddy;
+      const bAngle = game.state === 'playing' ? Math.max(-0.45, Math.min(1.2, b.vy / 600)) : 0;
+      drawCharacter(ctx, f, b.x, b.y, CONFIG.playerRadius, bAngle, Math.sin(game.time * 18 + 1));
+    }
     if (!blink) drawCharacter(ctx, character(), p.x, p.y, CONFIG.playerRadius, angle, Math.sin(game.time * 18));
+    if (game.toast) drawText(ctx, game.toast.text, W / 2, 166, 26, '#ffe066');
     drawText(ctx, `${game.score} / ${lv.goal}`, W / 2, 64, 44);
     for (let i = 0; i < CONFIG.hearts; i++) {
       drawHeart(ctx, W / 2 + (i - (CONFIG.hearts - 1) / 2) * 34, 116, 13, i < game.hearts);
@@ -249,6 +301,34 @@ function frame(t) {
 
 // ---------- Menus ----------
 
+// « Avec qui tu joues ? » : toute seule, ou avec une amie qui vole à côté de toi.
+function buildFriends() {
+  const list = $('friend-list');
+  list.replaceChildren();
+  const me = character().id;
+  const options = [null, ...allChars().filter((c) => c.id !== me)];
+  for (const c of options) {
+    const b = document.createElement('button');
+    b.className = 'pick small';
+    b.setAttribute('aria-pressed', (c ? c.id : null) === (friend() ? save.friend : null));
+    if (c) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 144;
+      drawCharacter(cv.getContext('2d'), c, 72, 74, 50, 0, -0.3);
+      b.append(cv);
+    } else {
+      const solo = document.createElement('b');
+      solo.textContent = '1';
+      b.append(solo);
+    }
+    const name = document.createElement('span');
+    name.textContent = c ? c.name : 'Toute seule';
+    b.append(name);
+    b.onclick = () => { save.friend = c ? c.id : null; writeSave(save); buildMenu(); };
+    list.append(b);
+  }
+}
+
 function buildMenu() {
   $('title').textContent = CONFIG.title;
   const chars = $('char-list');
@@ -267,6 +347,7 @@ function buildMenu() {
     b.onclick = () => { save.char = i; writeSave(save); buildMenu(); };
     chars.append(b);
   });
+  buildFriends();
   const make = document.createElement('button');
   make.className = 'pick make';
   make.innerHTML = '<b aria-hidden="true">+</b>';
@@ -353,7 +434,7 @@ function editCharacter(then) {
 
 $('btn-house').onclick = () => {
   $('menu').hidden = true;
-  openHouse(save, character, editCharacter, () => showMenu());
+  openHouse(save, character, editCharacter, () => showMenu(), friend);
 };
 $('btn-retry').onclick = startLevel;
 $('btn-next').onclick = () => { save.level++; writeSave(save); startLevel(); };

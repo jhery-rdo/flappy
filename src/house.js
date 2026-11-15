@@ -48,12 +48,13 @@ function isNight() {
 
 // ---------- Ouvrir / fermer ----------
 
-export function openHouse(save, getChar, editCharacter, onClose) {
+export function openHouse(save, getChar, editCharacter, onClose, getFriend = () => null) {
   if (!save.house) save.house = structuredClone(HOUSE_DEFAULT);
+  if (!save.house.friendPos) save.house.friendPos = { x: 420, y: 680 };
   if (save.pet) decayPet(save.pet);
   const canvas = document.getElementById('house-canvas');
   hs = {
-    save, getChar, editCharacter, onClose, canvas, ctx: canvas.getContext('2d'),
+    save, getChar, getFriend, editCharacter, onClose, canvas, say: null, ctx: canvas.getContext('2d'),
     view: 'outside', mode: 'meubles', selected: null, drag: null,
     t: 0, last: 0, raf: 0, scale: 1, offX: 0, offY: 0,
     pet: { x: 760, y: 665, tx: 760, dir: -1, wait: 1, jump: 0, happy: 0 },
@@ -151,6 +152,7 @@ function hsFrame(time) {
   hs.t += dt;
   if (hs.save.pet) updatePet(dt);
   for (const h of hs.hearts) { h.y += h.vy * dt; h.life -= dt; }
+  if (hs.say && (hs.say.t -= dt) <= 0) hs.say = null;
   hs.hearts = hs.hearts.filter((h) => h.life > 0);
 
   const ctx = hs.ctx;
@@ -283,7 +285,9 @@ function drawOutside(ctx) {
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
-  // le personnage qui attend devant
+  // le personnage (et son amie) qui attendent devant
+  const f = hs.getFriend();
+  if (f) drawCharacter(ctx, f, 780, 690 - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2 + 1) * 0.05);
   drawCharacter(ctx, hs.getChar(), 880, 690 - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2) * 0.05);
 }
 
@@ -355,6 +359,10 @@ function sceneObjects() {
     objs.push({ kind: 'item', ref: it, layer, y: it.y, box: itemBox(it) });
   }
   objs.push({ kind: 'char', layer: 2, y: h.char.y, box: { x: h.char.x - 64, y: h.char.y - 200, w: 128, h: 200 } });
+  if (hs.getFriend()) {
+    const fp = h.friendPos;
+    objs.push({ kind: 'friend', layer: 2, y: fp.y, box: { x: fp.x - 64, y: fp.y - 200, w: 128, h: 200 } });
+  }
   if (hs.save.pet) {
     const s = hs.pet;
     objs.push({ kind: 'pet', layer: 2, y: s.y, box: { x: s.x - 62, y: s.y - 105, w: 124, h: 105 } });
@@ -372,6 +380,9 @@ function drawInside(ctx) {
       f.draw(ctx, o.ref.x, o.ref.y, o.ref.color, hs.t);
     } else if (o.kind === 'char') {
       drawCharacter(ctx, hs.getChar(), h.char.x, h.char.y - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2) * 0.05);
+    } else if (o.kind === 'friend') {
+      const fp = h.friendPos;
+      drawCharacter(ctx, hs.getFriend(), fp.x, fp.y - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2 + 1) * 0.05);
     } else {
       const s = hs.pet;
       const p = hs.save.pet;
@@ -410,6 +421,23 @@ function drawInside(ctx) {
       ctx.strokeRect(b.x - 8, b.y - 8, b.w + 16, b.h + 16);
       ctx.restore();
     }
+  }
+  if (hs.say) {   // bulle de l'amie
+    const fp = h.friendPos;
+    ctx.font = '700 28px "Baloo 2", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    const w = ctx.measureText(hs.say.text).width + 36;
+    const bx = Math.max(w / 2 + 6, Math.min(ROOM_W - w / 2 - 6, fp.x));
+    const by = fp.y - 250;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx - w / 2, by - 28, w, 52, 22); else ctx.rect(bx - w / 2, by - 28, w, 52);
+    ctx.moveTo(fp.x - 10, by + 22);
+    ctx.lineTo(fp.x, by + 42);
+    ctx.lineTo(fp.x + 10, by + 22);
+    ctx.fill();
+    ctx.fillStyle = '#2b2140';
+    ctx.fillText(hs.say.text, bx, by + 8);
   }
   for (const heart of hs.hearts) {
     ctx.globalAlpha = Math.min(1, heart.life);
@@ -454,7 +482,7 @@ function hsPointerDown(e) {
     return;
   }
   hs.canvas.setPointerCapture?.(e.pointerId);
-  const pos = hit.kind === 'item' ? hit.ref : hit.kind === 'char' ? hs.save.house.char : hs.pet;
+  const pos = hit.kind === 'item' ? hit.ref : hit.kind === 'char' ? hs.save.house.char : hit.kind === 'friend' ? hs.save.house.friendPos : hs.pet;
   hs.drag = { target: hit.kind, pos, dx: pos.x - p.x, dy: pos.y - p.y, moved: false, start: p };
   if (hit.kind === 'item') {
     const items = hs.save.house.items;   // mettre devant
@@ -485,6 +513,7 @@ function hsPointerUp() {
   const d = hs.drag;
   hs.drag = null;
   if (!d.moved && d.target === 'pet') petAction('caresser');
+  if (!d.moved && d.target === 'friend') friendSays();
   writeSave(hs.save);
 }
 
@@ -493,6 +522,16 @@ houseCanvas.addEventListener('pointerdown', hsPointerDown);
 houseCanvas.addEventListener('pointermove', hsPointerMove);
 houseCanvas.addEventListener('pointerup', hsPointerUp);
 houseCanvas.addEventListener('pointercancel', hsPointerUp);
+
+const FRIEND_WORDS = ['Coucou !', 'J’adore ta maison !', 'On joue ensemble ?', 'Tu es ma meilleure amie !', 'Trop jolie ta chambre !'];
+
+function friendSays() {
+  const n = (hs.sayN = (hs.sayN || 0) + 1);
+  hs.say = { text: FRIEND_WORDS[n % FRIEND_WORDS.length], t: 2.2 };
+  const fp = hs.save.house.friendPos;
+  for (let i = 0; i < 4; i++) hs.hearts.push({ x: fp.x + (Math.random() - 0.5) * 110, y: fp.y - 120, vy: -50 - Math.random() * 30, life: 1 });
+  SFX.candy();
+}
 
 function enterHouse() {
   hs.view = 'inside';
