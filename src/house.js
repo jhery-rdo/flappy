@@ -13,6 +13,16 @@ const CHAR_R = 80;      // taille du personnage dans la maison (plus grand que d
 const PET_S = 40;
 
 const WALL_COLORS = ['#ffe3ec', '#e6f0ff', '#e8f7ee', '#fff4d6', '#efe6ff', '#ffffff', '#c0573e'];
+// Les meubles où l'on peut s'asseoir : hauteur du siège et places (décalage depuis le milieu).
+const SEATS = {
+  canape: { top: 60, slots: [-50, 50] },
+  fauteuil: { top: 60, slots: [0] },
+  lit: { top: 66, slots: [-55, 25] },
+};
+
+let hsIdN = 0;
+const newItemId = () => `m${Date.now().toString(36)}${(hsIdN++).toString(36)}`;
+
 const FLOOR_COLORS = ['#d9a066', '#b07a4f', '#8a5a36', '#e8d3b0', '#c9c4cf', '#f3b6c8'];
 
 const HOUSE_DEFAULT = {
@@ -51,6 +61,7 @@ function isNight() {
 export function openHouse(save, getChar, editCharacter, onClose, getFriend = () => null) {
   if (!save.house) save.house = structuredClone(HOUSE_DEFAULT);
   if (!save.house.friendPos) save.house.friendPos = { x: 420, y: 680 };
+  for (const it of save.house.items) if (!it.id) it.id = newItemId();
   if (save.pet) decayPet(save.pet);
   const canvas = document.getElementById('house-canvas');
   hs = {
@@ -349,6 +360,44 @@ function itemBox(it) {
   return { x: it.x - f.w / 2, y: it.y - f.h, w: f.w, h: f.h };
 }
 
+// Où se trouve une personne (soi ou l'amie) : debout, ou assise sur un meuble.
+function personPlace(pos) {
+  if (pos.sit) {
+    const it = hs.save.house.items.find((i) => i.id === pos.sit.id);
+    const seat = it && SEATS[it.type];
+    if (seat) {
+      pos.x = it.x + seat.slots[pos.sit.slot];
+      pos.y = it.y + 1;
+      const cy = it.y - seat.top - 0.72 * CHAR_R;
+      return { x: pos.x, cy, sortY: pos.y, sitting: true, box: { x: pos.x - 64, y: cy - 104, w: 128, h: 190 } };
+    }
+    pos.sit = null;   // le meuble a été rangé : on se relève
+  }
+  const cy = pos.y - 1.2 * CHAR_R;
+  return { x: pos.x, cy, sortY: pos.y, sitting: false, box: { x: pos.x - 64, y: cy - 104, w: 128, h: 200 } };
+}
+
+// Après avoir posé une personne : si elle est sur un canapé, un fauteuil ou un lit, elle s'assoit.
+function trySit(pos, other) {
+  const items = [...hs.save.house.items].reverse();
+  for (const it of items) {
+    const seat = SEATS[it.type];
+    if (!seat) continue;
+    const f = FURNITURE_BY_ID[it.type];
+    const body = pos.y - 1.2 * CHAR_R;   // le milieu du corps doit être sur le meuble
+    if (Math.abs(pos.x - it.x) > f.w / 2 + 10 || body < it.y - f.h - 60 || body > it.y + 30) continue;
+    const free = seat.slots
+      .map((dx, slot) => ({ slot, d: Math.abs(it.x + dx - pos.x) }))
+      .filter(({ slot }) => !(other && other.sit && other.sit.id === it.id && other.sit.slot === slot))
+      .sort((a, b) => a.d - b.d);
+    if (free.length) {
+      pos.sit = { id: it.id, slot: free[0].slot };
+      SFX.flap();
+      return;
+    }
+  }
+}
+
 function sceneObjects() {
   const h = hs.save.house;
   const objs = [];
@@ -358,10 +407,11 @@ function sceneObjects() {
     const layer = f.flat ? 0 : f.wall ? 1 : 2;
     objs.push({ kind: 'item', ref: it, layer, y: it.y, box: itemBox(it) });
   }
-  objs.push({ kind: 'char', layer: 2, y: h.char.y, box: { x: h.char.x - 64, y: h.char.y - 200, w: 128, h: 200 } });
+  const me = personPlace(h.char);
+  objs.push({ kind: 'char', layer: 2, y: me.sortY, place: me, box: me.box });
   if (hs.getFriend()) {
-    const fp = h.friendPos;
-    objs.push({ kind: 'friend', layer: 2, y: fp.y, box: { x: fp.x - 64, y: fp.y - 200, w: 128, h: 200 } });
+    const fr = personPlace(h.friendPos);
+    objs.push({ kind: 'friend', layer: 2, y: fr.sortY + 0.5, place: fr, box: fr.box });
   }
   if (hs.save.pet) {
     const s = hs.pet;
@@ -378,11 +428,10 @@ function drawInside(ctx) {
     if (o.kind === 'item') {
       const f = FURNITURE_BY_ID[o.ref.type];
       f.draw(ctx, o.ref.x, o.ref.y, o.ref.color, hs.t);
-    } else if (o.kind === 'char') {
-      drawCharacter(ctx, hs.getChar(), h.char.x, h.char.y - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2) * 0.05);
-    } else if (o.kind === 'friend') {
-      const fp = h.friendPos;
-      drawCharacter(ctx, hs.getFriend(), fp.x, fp.y - 1.2 * CHAR_R, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2 + 1) * 0.05);
+    } else if (o.kind === 'char' || o.kind === 'friend') {
+      const who = o.kind === 'char' ? hs.getChar() : hs.getFriend();
+      const pl = o.place;
+      drawCharacter(ctx, who, pl.x, pl.cy, CHAR_R, 0, -1.25 + Math.sin(hs.t * 2 + (o.kind === 'friend' ? 1 : 0)) * 0.05, pl.sitting);
     } else {
       const s = hs.pet;
       const p = hs.save.pet;
@@ -423,7 +472,8 @@ function drawInside(ctx) {
     }
   }
   if (hs.say) {   // bulle de l'amie
-    const fp = h.friendPos;
+    const fpl = personPlace(h.friendPos);
+    const fp = { x: fpl.x, y: fpl.cy + 96 };
     ctx.font = '700 28px "Baloo 2", system-ui, sans-serif';
     ctx.textAlign = 'center';
     const w = ctx.measureText(hs.say.text).width + 36;
@@ -502,6 +552,7 @@ function hsPointerMove(e) {
   d.pos.y = p.y + d.dy;
   if (d.target === 'item') clampItem(d.pos);
   else {
+    d.pos.sit = null;   // on se relève quand on est déplacée
     d.pos.x = Math.max(70, Math.min(ROOM_W - 70, d.pos.x));
     d.pos.y = Math.max(FLOOR_Y + 40, Math.min(ROOM_H - 10, d.pos.y));
   }
@@ -514,6 +565,9 @@ function hsPointerUp() {
   hs.drag = null;
   if (!d.moved && d.target === 'pet') petAction('caresser');
   if (!d.moved && d.target === 'friend') friendSays();
+  const h = hs.save.house;
+  if (d.moved && d.target === 'char') trySit(h.char, hs.getFriend() ? h.friendPos : null);
+  if (d.moved && d.target === 'friend') trySit(h.friendPos, h.char);
   writeSave(hs.save);
 }
 
@@ -528,7 +582,8 @@ const FRIEND_WORDS = ['Coucou !', 'J’adore ta maison !', 'On joue ensemble ?',
 function friendSays() {
   const n = (hs.sayN = (hs.sayN || 0) + 1);
   hs.say = { text: FRIEND_WORDS[n % FRIEND_WORDS.length], t: 2.2 };
-  const fp = hs.save.house.friendPos;
+  const fpl = personPlace(hs.save.house.friendPos);
+  const fp = { x: fpl.x, y: fpl.cy + 96 };
   for (let i = 0; i < 4; i++) hs.hearts.push({ x: fp.x + (Math.random() - 0.5) * 110, y: fp.y - 120, vy: -50 - Math.random() * 30, life: 1 });
   SFX.candy();
 }
@@ -625,14 +680,14 @@ function renderDrawer() {
   }
 
   if (hs.mode === 'meubles') {
-    drawer.append(hsEl('p', 'drawer-hint', 'Touche un meuble pour l’ajouter, puis fais-le glisser où tu veux.'));
+    drawer.append(hsEl('p', 'drawer-hint', 'Touche un meuble pour l’ajouter, puis fais-le glisser où tu veux. Pose ton personnage sur un canapé, un fauteuil ou un lit pour qu’il s’assoie.'));
     const grid = hsEl('div', 'cr-choices');
     for (const f of FURNITURE) {
       const b = hsEl('button', 'item-btn');
       b.append(thumb((ctx) => f.draw(ctx, 0, 0, f.colors[0], 0), f.w, f.h), hsEl('span', null, f.name));
       b.onclick = () => {
         const n = h.items.length;
-        const it = { type: f.id, x: 500 + ((n * 67) % 200) - 100, y: f.wall ? 330 : f.flat ? 690 : 640, color: f.colors[0] };
+        const it = { id: newItemId(), type: f.id, x: 500 + ((n * 67) % 200) - 100, y: f.wall ? 330 : f.flat ? 690 : 640, color: f.colors[0] };
         clampItem(it);
         h.items.push(it);
         hs.selected = { kind: 'item', ref: it };

@@ -35,7 +35,8 @@ function box(ctx, x, y, w, h, r) {
 
 // Dessine un personnage centré en (x, y), de rayon r, tourné de `angle` radians.
 // `flap` va de -1 à 1 et fait battre les bras.
-export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0) {
+// `sitting` = true pour la dessiner assise (jambes pliées).
+export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0, sitting = false) {
   const hy = -0.35 * r; // centre de la tête
   const dark = '#2b2140';
   ctx.save();
@@ -64,9 +65,16 @@ export function drawCharacter(ctx, c, x, y, r, angle = 0, flap = 0) {
   const jog = c.bottom.style === 'jogging';
   for (const s of [-1, 1]) {
     ctx.fillStyle = jog ? c.bottom.color : c.skin;
-    box(ctx, s * 0.18 * r - 0.11 * r, 0.6 * r, 0.22 * r, 0.48 * r, 0.1 * r);
-    ctx.fillStyle = c.shoes;
-    ellipse(ctx, s * 0.2 * r, 1.1 * r, 0.16 * r, 0.09 * r);
+    if (sitting) {
+      box(ctx, s * 0.2 * r - 0.11 * r, 0.74 * r, 0.22 * r, 0.26 * r, 0.1 * r);
+      ellipse(ctx, s * 0.2 * r, 0.76 * r, 0.16 * r, 0.11 * r);   // genoux
+      ctx.fillStyle = c.shoes;
+      ellipse(ctx, s * 0.2 * r, 1.0 * r, 0.15 * r, 0.08 * r);
+    } else {
+      box(ctx, s * 0.18 * r - 0.11 * r, 0.6 * r, 0.22 * r, 0.48 * r, 0.1 * r);
+      ctx.fillStyle = c.shoes;
+      ellipse(ctx, s * 0.2 * r, 1.1 * r, 0.16 * r, 0.09 * r);
+    }
   }
 
   // ventre (peau), puis bas et haut
