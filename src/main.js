@@ -265,6 +265,12 @@ function buildMenu() {
   const levels = $('level-list');
   levels.replaceChildren();
   LEVELS.forEach((l, i) => {
+    if (l.world && l.world !== LEVELS[i - 1]?.world) {
+      const label = document.createElement('p');
+      label.className = 'world';
+      label.textContent = l.world;
+      levels.append(label);
+    }
     const locked = i > save.unlocked;
     const b = document.createElement('button');
     b.className = 'pick';
@@ -275,7 +281,8 @@ function buildMenu() {
     sw.style.background = `linear-gradient(${l.sky[0]}, ${l.sky[1]})`;
     sw.style.borderBottomColor = l.groundTop;
     const name = document.createElement('span');
-    name.textContent = l.name;
+    const short = l.world ? l.name.replace(l.world, '').trim() : l.name;
+    name.textContent = short.charAt(0).toUpperCase() + short.slice(1);
     const info = document.createElement('small');
     info.textContent = locked ? 'Verrouillé' : `Record : ${save.best[l.id] || 0} / ${l.goal}`;
     b.append(sw, name, info);

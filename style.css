@@ -92,6 +92,7 @@ h2 {
 .tag { margin: 0; padding: 2px 14px; border-radius: 999px; background: var(--paper); font-weight: 700; }
 
 .picker { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 640px; }
+.world { flex-basis: 100%; margin: 4px 0 0; font-weight: 800; font-size: 1.15rem; color: var(--paper); -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; }
 .pick {
   display: flex;
   flex-direction: column;

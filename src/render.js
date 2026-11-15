@@ -72,6 +72,104 @@ export function drawBackground(ctx, level, W, H, dist, time) {
     drawEiffel(ctx, level.paris, W * 0.68, gy, 430, time);
     drawRooftops(ctx, level.paris, W, gy, dist);
   }
+  if (level.newyork) {
+    const gy = H - CONFIG.groundHeight;
+    const p = level.newyork;
+    drawSkyline(ctx, p.far, p.window, W, gy, dist * 0.12, 150, 210, 64, 0.35);
+    if (W > 620) drawLiberty(ctx, p, W * 0.16, gy, 330, time);
+    drawEmpireState(ctx, p, W * 0.7, gy, 470);
+    drawSkyline(ctx, p.near, p.window, W, gy, dist * 0.3, 80, 120, 70, 0.8);
+  }
+}
+
+// Une rangée de gratte-ciel qui défile. `shift` = décalage, hauteurs entre minH et minH+varH.
+function drawSkyline(ctx, color, win, W, baseY, shift, minH, varH, bw, winAlpha) {
+  const first = Math.floor(shift / bw);
+  for (let i = first; i < first + W / bw + 2; i++) {
+    const x = i * bw - shift;
+    const k = ((i % 40) + 40) % 40;
+    const h = minH + rnd(k + 70) * varH;
+    const w = bw - 6 - rnd(k + 90) * 12;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, baseY - h, w, h);
+    if (rnd(k + 110) > 0.6) { // réservoir d'eau sur le toit
+      ctx.fillRect(x + w * 0.3, baseY - h - 18, 16, 14);
+      ctx.fillRect(x + w * 0.3 + 2, baseY - h - 4, 2, 4);
+      ctx.fillRect(x + w * 0.3 + 12, baseY - h - 4, 2, 4);
+    }
+    ctx.globalAlpha = winAlpha;
+    ctx.fillStyle = win;
+    for (let wy = baseY - h + 12; wy < baseY - 14; wy += 18) {
+      for (let wx = x + 8; wx < x + w - 10; wx += 14) {
+        if (rnd(k * 31 + wx * 0.7 + wy) > 0.35) ctx.fillRect(wx, wy, 7, 9);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// L'Empire State Building : une tour en escalier avec une flèche.
+function drawEmpireState(ctx, p, x, baseY, h) {
+  ctx.save();
+  ctx.translate(x, baseY);
+  ctx.fillStyle = p.landmark;
+  const steps = [[120, 0.42], [92, 0.62], [70, 0.8], [44, 0.88], [26, 0.94], [12, 1]];
+  for (const [w, top] of steps) ctx.fillRect(-w / 2, -h * top, w, h * top);
+  ctx.fillRect(-2, -h - 60, 4, 62);
+  ctx.fillStyle = p.window;
+  ctx.globalAlpha = p.lit ? 0.9 : 0.45;
+  for (let y = -h * 0.8 + 10; y < -12; y += 16) {
+    const w = y < -h * 0.62 ? 70 : y < -h * 0.42 ? 92 : 120;
+    for (let wx = -w / 2 + 8; wx < w / 2 - 8; wx += 12) ctx.fillRect(wx, y, 5, 8);
+  }
+  ctx.globalAlpha = 1;
+  if (p.lit) { // le haut s'allume la nuit
+    ctx.fillStyle = '#ff5d8f';
+    ctx.fillRect(-13, -h * 0.94 - 2, 26, 6);
+    ctx.fillStyle = '#7bdff2';
+    ctx.fillRect(-6, -h, 12, 6);
+  }
+  ctx.restore();
+}
+
+// La statue de la Liberté sur son socle, avec sa torche.
+function drawLiberty(ctx, p, x, baseY, h, time) {
+  ctx.save();
+  ctx.translate(x, baseY);
+  ctx.fillStyle = p.landmark;
+  ctx.fillRect(-46, -h * 0.38, 92, h * 0.38);           // socle
+  ctx.fillRect(-56, -h * 0.4, 112, 10);
+  ctx.fillStyle = p.liberty;
+  ctx.beginPath();                                      // robe
+  ctx.moveTo(-30, -h * 0.4);
+  ctx.lineTo(-18, -h * 0.82);
+  ctx.lineTo(18, -h * 0.82);
+  ctx.lineTo(32, -h * 0.4);
+  ctx.fill();
+  ctx.beginPath();                                      // tête
+  ctx.arc(0, -h * 0.87, 13, 0, Math.PI * 2);
+  ctx.fill();
+  for (let i = -2; i <= 2; i++) {                       // couronne
+    ctx.save();
+    ctx.translate(0, -h * 0.87);
+    ctx.rotate(i * 0.38);
+    ctx.fillRect(-2, -26, 4, 14);
+    ctx.restore();
+  }
+  ctx.save();                                           // bras levé
+  ctx.translate(14, -h * 0.8);
+  ctx.rotate(0.18);
+  ctx.fillRect(-5, -h * 0.2, 11, h * 0.2);
+  ctx.fillRect(-9, -h * 0.2 - 10, 19, 10);              // torche
+  const f = 1 + Math.sin(time * 8) * 0.12;
+  ctx.fillStyle = '#ffc93c';
+  ctx.beginPath();
+  ctx.ellipse(0, -h * 0.2 - 22, 8 * f, 13 * f, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = p.liberty;                            // tablette
+  ctx.fillRect(-28, -h * 0.68, 12, 22);
+  ctx.restore();
 }
 
 // La tour Eiffel, posée sur le sol en (x, baseY), de hauteur h.
@@ -142,13 +240,14 @@ function drawRooftops(ctx, p, W, baseY, dist) {
   }
 }
 
-// Un obstacle = deux baguettes de pain, une qui descend et une qui monte.
+// Un obstacle = deux morceaux (baguettes ou hot-dogs), un qui descend et un qui monte.
 export function drawObstacle(ctx, level, o, groundY) {
   const w = CONFIG.obstacleWidth;
   const c = level.obstacle;
   const top = o.gapY - level.gap / 2;
   const bottom = o.gapY + level.gap / 2;
   const parts = [[-60, top + 60], [bottom, groundY - bottom + 60]];
+  if (c.kind === 'hotdog') return drawHotdogs(ctx, c, o.x, w, parts);
   for (const [y, h] of parts) {
     ctx.fillStyle = c.edge;
     roundRect(ctx, o.x, y, w, h, w / 2);
@@ -168,6 +267,33 @@ export function drawObstacle(ctx, level, o, groundY) {
       ctx.fill();
     }
     ctx.restore();
+  }
+}
+
+// Des hot-dogs debout : le pain, la saucisse qui dépasse et la moutarde en zigzag.
+function drawHotdogs(ctx, c, x, w, parts) {
+  for (const [y, h] of parts) {
+    ctx.fillStyle = c.sausage;
+    roundRect(ctx, x + w * 0.22, y - 10, w * 0.56, h + 20, w * 0.28);
+    ctx.fill();
+    for (const side of [0, 1]) {
+      ctx.fillStyle = c.edge;
+      roundRect(ctx, x + side * w * 0.6, y + 6, w * 0.4, h - 12, w * 0.2);
+      ctx.fill();
+      ctx.fillStyle = c.color;
+      roundRect(ctx, x + side * w * 0.6 + 4, y + 10, w * 0.4 - 10, h - 20, w * 0.16);
+      ctx.fill();
+    }
+    ctx.strokeStyle = c.sauce;
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let s = y + 10, i = 0; s < y + h - 10; s += 16, i++) {
+      const sx = x + w / 2 + (i % 2 ? 9 : -9);
+      if (i === 0) ctx.moveTo(sx, s); else ctx.lineTo(sx, s);
+    }
+    ctx.stroke();
   }
 }
 
