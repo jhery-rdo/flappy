@@ -124,6 +124,30 @@ export const FURNITURE = [
     },
   },
   {
+    id: 'panier', name: 'Lit d’animal', w: 130, h: 60, pet: true,
+    colors: ['#ff8fb8', '#7fb2ff', '#7ad3c4', '#ffd166', '#b79cf2'],
+    draw(ctx, x, y, c) {
+      ctx.fillStyle = '#c98a3e';                          // le panier
+      fnOval(ctx, x, y - 22, 65, 22);
+      ctx.fillRect(x - 65, y - 44, 130, 22);
+      fnOval(ctx, x, y - 44, 65, 16);
+      ctx.fillStyle = c;                                  // le coussin
+      fnOval(ctx, x, y - 44, 54, 12);
+      ctx.strokeStyle = 'rgba(0,0,0,.12)';                // l'osier
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = -50; i <= 50; i += 14) {
+        ctx.moveTo(x + i, y - 34);
+        ctx.lineTo(x + i, y - 6);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';                          // un petit os brodé
+      fnOval(ctx, x - 10, y - 22, 5, 5);
+      fnOval(ctx, x + 10, y - 22, 5, 5);
+      ctx.fillRect(x - 10, y - 25, 20, 6);
+    },
+  },
+  {
     id: 'tapis', name: 'Tapis', w: 250, h: 50, flat: true,
     colors: ['#ff8fb8', '#b79cf2', '#7ad3c4', '#ffd166', '#7fb2ff'],
     draw(ctx, x, y, c) {

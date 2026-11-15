@@ -68,7 +68,7 @@ export function openHouse(save, getChar, editCharacter, onClose, getFriend = () 
     save, getChar, getFriend, editCharacter, onClose, canvas, say: null, ctx: canvas.getContext('2d'),
     view: 'outside', mode: 'meubles', selected: null, drag: null,
     t: 0, last: 0, raf: 0, scale: 1, offX: 0, offY: 0,
-    pet: { x: 760, y: 665, tx: 760, dir: -1, wait: 1, jump: 0, happy: 0 },
+    pet: { x: 760, y: 665, tx: 760, ty: 665, dir: -1, wait: 1, jump: 0, happy: 0, sleep: 0, bed: null },
     bowl: 0, hearts: [],
     adopt: { kind: 'chat', color: PETS[0].colors[0], name: '' },
   };
@@ -116,6 +116,7 @@ function decayPet(p) {
 
 function petAction(kind) {
   const p = hs.save.pet;
+  wakePet();
   if (kind === 'manger') {
     p.hunger = 100;
     hs.bowl = 4;
@@ -144,14 +145,64 @@ function updatePet(dt) {
   s.jump = Math.max(0, s.jump - dt);
   hs.bowl = Math.max(0, hs.bowl - dt);
   if (hs.drag && hs.drag.target === 'pet') return;
+  if (s.sleep > 0) {   // il dort dans son lit
+    const bed = petBedById(s.bed);
+    if (!bed) { s.sleep = 0; s.bed = null; return; }
+    s.x = bed.x;
+    s.y = bed.y + 1;
+    if ((s.sleep -= dt) <= 0) wakePet();
+    return;
+  }
   const dx = s.tx - s.x;
-  if (Math.abs(dx) > 4) {
-    s.x += Math.sign(dx) * Math.min(Math.abs(dx), 80 * dt);
-    s.dir = Math.sign(dx);
+  const dy = s.ty - s.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > 4) {
+    const step = Math.min(dist, 80 * dt);
+    s.x += (dx / dist) * step;
+    s.y += (dy / dist) * step;
+    if (Math.abs(dx) > 2) s.dir = Math.sign(dx);
+  } else if (s.bed) {
+    s.sleep = 8 + Math.random() * 6;   // arrivé au lit : dodo
   } else if ((s.wait -= dt) <= 0) {
-    s.tx = 120 + Math.random() * 760;
+    const beds = hs.save.house.items.filter((i) => i.type === 'panier');
+    if (beds.length && Math.random() < 0.3) {   // parfois, il va faire une sieste
+      const bed = beds[Math.floor(Math.random() * beds.length)];
+      s.bed = bed.id;
+      s.tx = bed.x;
+      s.ty = bed.y + 1;
+    } else {
+      s.tx = 120 + Math.random() * 760;
+      s.ty = 620 + Math.random() * 70;
+    }
     s.wait = 2 + Math.random() * 3;
   }
+}
+
+function petBedById(id) {
+  return id ? hs.save.house.items.find((i) => i.id === id && i.type === 'panier') : null;
+}
+
+function wakePet() {
+  const s = hs.pet;
+  if (!s.bed) return;
+  const bed = petBedById(s.bed);
+  s.sleep = 0;
+  s.bed = null;
+  if (bed) { s.y = Math.min(ROOM_H - 10, bed.y + 25); s.ty = s.y; }
+  s.tx = s.x;
+  s.wait = 1.5;
+}
+
+// Si on pose l'animal sur son lit, il s'endort.
+function tryPetBed() {
+  const s = hs.pet;
+  const bed = [...hs.save.house.items].reverse().find((i) => i.type === 'panier' && Math.abs(s.x - i.x) < 75 && Math.abs(s.y - i.y) < 70);
+  if (!bed) return false;
+  s.bed = bed.id;
+  s.x = s.tx = bed.x;
+  s.y = s.ty = bed.y + 1;
+  s.sleep = 10 + Math.random() * 6;
+  return true;
 }
 
 // ---------- Dessin ----------
@@ -415,7 +466,7 @@ function sceneObjects() {
   }
   if (hs.save.pet) {
     const s = hs.pet;
-    objs.push({ kind: 'pet', layer: 2, y: s.y, box: { x: s.x - 62, y: s.y - 105, w: 124, h: 105 } });
+    objs.push({ kind: 'pet', layer: 2, y: s.y + (s.sleep > 0 ? 0.5 : 0), box: { x: s.x - 62, y: s.y - 105, w: 124, h: 105 } });
   }
   return objs.sort((a, b) => a.layer - b.layer || a.y - b.y);
 }
@@ -446,8 +497,23 @@ function drawInside(ctx) {
         ctx.fill();
       }
       const jy = s.jump > 0 ? -Math.abs(Math.sin(s.jump * 7)) * 50 : 0;
-      drawPet(ctx, p.kind, p.color, s.x, s.y + jy, PET_S, hs.t, s.dir, s.happy > 0);
-      if (p.hunger < 40 && hs.bowl <= 0) {   // petite bulle : il a faim
+      if (s.sleep > 0) {   // couché dans son lit, les yeux fermés
+        ctx.save();
+        ctx.translate(s.x, s.y - 30);
+        ctx.scale(1, 0.82);
+        drawPet(ctx, p.kind, p.color, 0, 0, PET_S, 0, s.dir, true);
+        ctx.restore();
+        ctx.fillStyle = '#7b6cf6';
+        ctx.font = '800 30px "Baloo 2", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        const z = (hs.t * 0.8) % 1;
+        ctx.globalAlpha = 1 - z;
+        ctx.fillText('Z', s.x + 40 + z * 20, s.y - 110 - z * 40);
+        ctx.globalAlpha = 1 - ((z + 0.5) % 1);
+        ctx.fillText('z', s.x + 50 + ((z + 0.5) % 1) * 20, s.y - 100 - ((z + 0.5) % 1) * 40);
+        ctx.globalAlpha = 1;
+      } else drawPet(ctx, p.kind, p.color, s.x, s.y + jy, PET_S, hs.t, s.dir, s.happy > 0);
+      if (p.hunger < 40 && hs.bowl <= 0 && s.sleep <= 0) {   // petite bulle : il a faim
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(s.x + 30, s.y - 140, 26, 0, Math.PI * 2);
@@ -556,7 +622,7 @@ function hsPointerMove(e) {
     d.pos.x = Math.max(70, Math.min(ROOM_W - 70, d.pos.x));
     d.pos.y = Math.max(FLOOR_Y + 40, Math.min(ROOM_H - 10, d.pos.y));
   }
-  if (d.target === 'pet') d.pos.tx = d.pos.x;
+  if (d.target === 'pet') { d.pos.tx = d.pos.x; d.pos.ty = d.pos.y; d.pos.sleep = 0; d.pos.bed = null; }
 }
 
 function hsPointerUp() {
@@ -564,6 +630,7 @@ function hsPointerUp() {
   const d = hs.drag;
   hs.drag = null;
   if (!d.moved && d.target === 'pet') petAction('caresser');
+  if (d.moved && d.target === 'pet' && tryPetBed()) SFX.flap();
   if (!d.moved && d.target === 'friend') friendSays();
   const h = hs.save.house;
   if (d.moved && d.target === 'char') trySit(h.char, hs.getFriend() ? h.friendPos : null);
@@ -777,3 +844,6 @@ function renderPetPanel(drawer) {
   actions.append(change);
   drawer.append(actions);
 }
+
+// Outil de test (console du navigateur) : __house() donne l'état de la maison.
+window.__house = () => hs;
