@@ -1,7 +1,7 @@
 // La maison à New York : on la voit de dehors, puis on entre pour la décorer
 // et s'occuper de son animal. La pièce fait toujours 1000 x 720 unités.
 import { drawCharacter } from './characters.js';
-import { FURNITURE, FURNITURE_BY_ID } from './furniture.js';
+import { FURNITURE, FURNITURE_BY_ID, CATEGORIES } from './furniture.js';
 import { PETS, drawPet } from './pets.js';
 import { writeSave } from './storage.js';
 import { SFX } from './audio.js';
@@ -18,6 +18,10 @@ const SEATS = {
   canape: { top: 60, slots: [-50, 50] },
   fauteuil: { top: 60, slots: [0] },
   lit: { top: 66, slots: [-55, 25] },
+  chaise: { top: 46, slots: [0] },
+  pouf: { top: 44, slots: [0] },
+  chaiselongue: { top: 40, slots: [-20, 50] },
+  baignoire: { top: 42, slots: [-40, 30] },
 };
 
 let hsIdN = 0;
@@ -25,17 +29,94 @@ const newItemId = () => `m${Date.now().toString(36)}${(hsIdN++).toString(36)}`;
 
 const FLOOR_COLORS = ['#d9a066', '#b07a4f', '#8a5a36', '#e8d3b0', '#c9c4cf', '#f3b6c8'];
 
-const HOUSE_DEFAULT = {
-  wall: '#ffe3ec', wallStyle: 'uni', floor: '#d9a066',
-  items: [
-    { type: 'tapis', x: 520, y: 690, color: '#b79cf2' },
-    { type: 'tableau', x: 790, y: 300, color: '#ffd166' },
-    { type: 'canape', x: 300, y: 600, color: '#ff8fb8' },
-    { type: 'lampe', x: 120, y: 600, color: '#ffd166' },
-    { type: 'plante', x: 880, y: 610, color: '#e07a5f' },
-  ],
-  char: { x: 600, y: 660 },
-};
+// Les pièces de la maison. Chaque pièce a ses murs, son sol et ses meubles.
+//   outdoor: true -> une terrasse dehors (le ciel à la place des murs)
+//   floorStyle : 'parquet' | 'carrelage'
+const ROOMS_DEFAULT = [
+  {
+    id: 'salon', name: 'Salon', cat: 'salon', wall: '#ffe3ec', wallStyle: 'uni', floor: '#d9a066', floorStyle: 'parquet',
+    items: [
+      { type: 'tapis', x: 520, y: 690, color: '#b79cf2' },
+      { type: 'tableau', x: 790, y: 300, color: '#ffd166' },
+      { type: 'canape', x: 300, y: 600, color: '#ff8fb8' },
+      { type: 'lampe', x: 120, y: 600, color: '#ffd166' },
+      { type: 'plante', x: 880, y: 610, color: '#e07a5f' },
+    ],
+  },
+  {
+    id: 'chambre', name: 'Chambre', cat: 'chambre', wall: '#efe6ff', wallStyle: 'uni', floor: '#e8d3b0', floorStyle: 'parquet',
+    items: [
+      { type: 'tapis', x: 480, y: 700, color: '#ff8fb8' },
+      { type: 'horloge', x: 160, y: 300, color: '#ff8fb8' },
+      { type: 'armoire', x: 860, y: 600, color: '#ffffff' },
+      { type: 'lit', x: 290, y: 640, color: '#b79cf2' },
+      { type: 'coffre', x: 660, y: 640, color: '#7fb2ff' },
+      { type: 'nounours', x: 560, y: 620, color: '#c98a3e' },
+    ],
+  },
+  {
+    id: 'cuisine', name: 'Cuisine', cat: 'cuisine', wall: '#fff4d6', wallStyle: 'uni', floor: '#c9c4cf', floorStyle: 'carrelage',
+    items: [
+      { type: 'frigo', x: 110, y: 610, color: '#ffffff' },
+      { type: 'four', x: 250, y: 610, color: '#ffffff' },
+      { type: 'evier', x: 410, y: 610, color: '#7ad3c4' },
+      { type: 'table', x: 720, y: 650, color: '#ffd1e0' },
+      { type: 'chaise', x: 630, y: 668, color: '#ffd166' },
+      { type: 'chaise', x: 810, y: 668, color: '#ffd166' },
+    ],
+  },
+  {
+    id: 'bain', name: 'Salle de bain', cat: 'bain', wall: '#e6f0ff', wallStyle: 'uni', floor: '#ffffff', floorStyle: 'carrelage',
+    items: [
+      { type: 'miroir', x: 740, y: 420, color: '#ffd166' },
+      { type: 'baignoire', x: 260, y: 650, color: '#ffffff' },
+      { type: 'lavabo', x: 740, y: 620, color: '#ffffff' },
+      { type: 'plante', x: 910, y: 640, color: '#7fb2ff' },
+    ],
+  },
+  {
+    id: 'terrasse', name: 'Terrasse', cat: 'dehors', outdoor: true, wall: '#7ec8f2', wallStyle: 'uni', floor: '#b07a4f', floorStyle: 'parquet',
+    items: [
+      { type: 'parasol', x: 140, y: 620, color: '#ff8fb8' },
+      { type: 'chaiselongue', x: 300, y: 650, color: '#7fb2ff' },
+      { type: 'piscine', x: 650, y: 690, color: '#ffd166' },
+      { type: 'fleurs', x: 900, y: 620, color: '#b07a4f' },
+    ],
+  },
+];
+
+const HOUSE_DEFAULT = { room: 0, rooms: ROOMS_DEFAULT, char: { x: 600, y: 660 } };
+
+// Les vieilles sauvegardes n'avaient qu'une pièce : on la garde comme salon et on ajoute les autres.
+function upgradeHouse(h) {
+  if (!h.rooms) {
+    const rooms = structuredClone(ROOMS_DEFAULT);
+    Object.assign(rooms[0], { wall: h.wall, wallStyle: h.wallStyle, floor: h.floor, items: h.items });
+    h.rooms = rooms;
+    h.room = 0;
+    delete h.wall; delete h.wallStyle; delete h.floor; delete h.items;
+  }
+  for (const r of h.rooms) for (const it of r.items) if (!it.id) it.id = newItemId();
+}
+
+const curRoom = () => hs.save.house.rooms[hs.save.house.room] || hs.save.house.rooms[0];
+
+// Changer de pièce : le personnage, l'amie et l'animal viennent avec nous.
+function goToRoom(i) {
+  const h = hs.save.house;
+  if (i === h.room) return;
+  h.room = i;
+  h.char.sit = null;
+  if (h.friendPos) h.friendPos.sit = null;
+  h.char.x = 600; h.char.y = 670;
+  if (h.friendPos) { h.friendPos.x = 430; h.friendPos.y = 680; }
+  Object.assign(hs.pet, { x: 780, y: 665, tx: 780, ty: 665, sleep: 0, bed: null, wait: 1 });
+  hs.selected = null;
+  hs.cat = curRoom().cat;
+  writeSave(hs.save);
+  SFX.flap();
+  renderDrawer();
+}
 
 let hs = null;
 
@@ -61,12 +142,12 @@ function isNight() {
 export function openHouse(save, getChar, editCharacter, onClose, getFriend = () => null) {
   if (!save.house) save.house = structuredClone(HOUSE_DEFAULT);
   if (!save.house.friendPos) save.house.friendPos = { x: 420, y: 680 };
-  for (const it of save.house.items) if (!it.id) it.id = newItemId();
+  upgradeHouse(save.house);
   if (save.pet) decayPet(save.pet);
   const canvas = document.getElementById('house-canvas');
   hs = {
     save, getChar, getFriend, editCharacter, onClose, canvas, say: null, ctx: canvas.getContext('2d'),
-    view: 'outside', mode: 'meubles', selected: null, drag: null,
+    view: 'outside', mode: 'meubles', selected: null, drag: null, cat: null,
     t: 0, last: 0, raf: 0, scale: 1, offX: 0, offY: 0,
     pet: { x: 760, y: 665, tx: 760, ty: 665, dir: -1, wait: 1, jump: 0, happy: 0, sleep: 0, bed: null },
     bowl: 0, hearts: [],
@@ -164,7 +245,7 @@ function updatePet(dt) {
   } else if (s.bed) {
     s.sleep = 8 + Math.random() * 6;   // arrivé au lit : dodo
   } else if ((s.wait -= dt) <= 0) {
-    const beds = hs.save.house.items.filter((i) => i.type === 'panier');
+    const beds = curRoom().items.filter((i) => i.type === 'panier');
     if (beds.length && Math.random() < 0.3) {   // parfois, il va faire une sieste
       const bed = beds[Math.floor(Math.random() * beds.length)];
       s.bed = bed.id;
@@ -179,7 +260,7 @@ function updatePet(dt) {
 }
 
 function petBedById(id) {
-  return id ? hs.save.house.items.find((i) => i.id === id && i.type === 'panier') : null;
+  return id ? curRoom().items.find((i) => i.id === id && i.type === 'panier') : null;
 }
 
 function wakePet() {
@@ -196,7 +277,7 @@ function wakePet() {
 // Si on pose l'animal sur son lit, il s'endort.
 function tryPetBed() {
   const s = hs.pet;
-  const bed = [...hs.save.house.items].reverse().find((i) => i.type === 'panier' && Math.abs(s.x - i.x) < 75 && Math.abs(s.y - i.y) < 70);
+  const bed = [...curRoom().items].reverse().find((i) => i.type === 'panier' && Math.abs(s.x - i.x) < 75 && Math.abs(s.y - i.y) < 70);
   if (!bed) return false;
   s.bed = bed.id;
   s.x = s.tx = bed.x;
@@ -227,9 +308,10 @@ function hsFrame(time) {
     const full = hs.canvas.width / hs.scale;
     const top = -hs.offY / hs.scale;
     const tall = hs.canvas.height / hs.scale;
-    ctx.fillStyle = hs.save.house.wall;
+    const room = curRoom();
+    ctx.fillStyle = room.outdoor ? (isNight() ? '#3b2f7a' : '#e6f4ff') : room.wall;
     ctx.fillRect(left, top, full, FLOOR_Y - top);
-    ctx.fillStyle = hs.save.house.floor;
+    ctx.fillStyle = room.floor;
     ctx.fillRect(left, FLOOR_Y, full, tall);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(left, FLOOR_Y - 14, full, 16);
@@ -354,7 +436,14 @@ function drawOutside(ctx) {
 }
 
 function drawWall(ctx) {
-  const h = hs.save.house;
+  const h = curRoom();
+  if (h.outdoor) {   // la terrasse sur le toit : le ciel de New York et une rambarde
+    drawSkylineBox(ctx, 0, 0, ROOM_W, FLOOR_Y, isNight());
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, FLOOR_Y - 80, ROOM_W, 10);
+    for (let x = 10; x < ROOM_W; x += 40) ctx.fillRect(x, FLOOR_Y - 76, 6, 76);
+    return;
+  }
   ctx.fillStyle = h.wall;
   ctx.fillRect(0, 0, ROOM_W, FLOOR_Y);
   if (h.wallStyle === 'briques') {
@@ -394,16 +483,25 @@ function drawWall(ctx) {
 }
 
 function drawFloor(ctx) {
-  const h = hs.save.house;
+  const h = curRoom();
   ctx.fillStyle = h.floor;
   ctx.fillRect(0, FLOOR_Y, ROOM_W, ROOM_H - FLOOR_Y);
-  ctx.fillStyle = 'rgba(0,0,0,.08)';
-  for (let y = FLOOR_Y + 30; y < ROOM_H; y += 34) ctx.fillRect(0, y, ROOM_W, 3);
-  for (let y = FLOOR_Y, row = 0; y < ROOM_H; y += 34, row++) {
-    for (let x = (row % 2) * 90; x < ROOM_W; x += 180) ctx.fillRect(x, y, 3, 34);
+  if (h.floorStyle === 'carrelage') {
+    ctx.fillStyle = 'rgba(43,33,64,.07)';
+    for (let y = FLOOR_Y, row = 0; y < ROOM_H; y += 44, row++) {
+      for (let x = (row % 2) * 44; x < ROOM_W; x += 88) ctx.fillRect(x, y, 44, 44);
+    }
+  } else {
+    ctx.fillStyle = 'rgba(0,0,0,.08)';
+    for (let y = FLOOR_Y + 30; y < ROOM_H; y += 34) ctx.fillRect(0, y, ROOM_W, 3);
+    for (let y = FLOOR_Y, row = 0; y < ROOM_H; y += 34, row++) {
+      for (let x = (row % 2) * 90; x < ROOM_W; x += 180) ctx.fillRect(x, y, 3, 34);
+    }
   }
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, FLOOR_Y - 14, ROOM_W, 16);  // plinthe
+  if (!h.outdoor) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, FLOOR_Y - 14, ROOM_W, 16);  // plinthe
+  }
 }
 
 function itemBox(it) {
@@ -414,7 +512,7 @@ function itemBox(it) {
 // Où se trouve une personne (soi ou l'amie) : debout, ou assise sur un meuble.
 function personPlace(pos) {
   if (pos.sit) {
-    const it = hs.save.house.items.find((i) => i.id === pos.sit.id);
+    const it = curRoom().items.find((i) => i.id === pos.sit.id);
     const seat = it && SEATS[it.type];
     if (seat) {
       pos.x = it.x + seat.slots[pos.sit.slot];
@@ -430,7 +528,7 @@ function personPlace(pos) {
 
 // Après avoir posé une personne : si elle est sur un canapé, un fauteuil ou un lit, elle s'assoit.
 function trySit(pos, other) {
-  const items = [...hs.save.house.items].reverse();
+  const items = [...curRoom().items].reverse();
   for (const it of items) {
     const seat = SEATS[it.type];
     if (!seat) continue;
@@ -452,7 +550,7 @@ function trySit(pos, other) {
 function sceneObjects() {
   const h = hs.save.house;
   const objs = [];
-  for (const it of h.items) {
+  for (const it of curRoom().items) {
     const f = FURNITURE_BY_ID[it.type];
     if (!f) continue;
     const layer = f.flat ? 0 : f.wall ? 1 : 2;
@@ -601,7 +699,7 @@ function hsPointerDown(e) {
   const pos = hit.kind === 'item' ? hit.ref : hit.kind === 'char' ? hs.save.house.char : hit.kind === 'friend' ? hs.save.house.friendPos : hs.pet;
   hs.drag = { target: hit.kind, pos, dx: pos.x - p.x, dy: pos.y - p.y, moved: false, start: p };
   if (hit.kind === 'item') {
-    const items = hs.save.house.items;   // mettre devant
+    const items = curRoom().items;   // mettre devant
     items.push(...items.splice(items.indexOf(hit.ref), 1));
     hs.selected = hit;
     renderDrawer();
@@ -697,7 +795,8 @@ function renderDrawer() {
   const tabs = document.getElementById('house-tabs');
   drawer.replaceChildren();
   tabs.replaceChildren();
-  const h = hs.save.house;
+  document.getElementById('house-rooms').replaceChildren();
+  const h = curRoom();
 
   if (hs.view === 'outside') {
     drawer.append(hsEl('p', 'drawer-hint', 'Voici ta maison à New York !'));
@@ -725,6 +824,15 @@ function renderDrawer() {
     tabs.append(b);
   }
 
+  const roomsNav = document.getElementById('house-rooms');
+  roomsNav.replaceChildren();
+  hs.save.house.rooms.forEach((r, i) => {
+    const b = hsEl('button', 'chip', r.name);
+    b.setAttribute('aria-pressed', i === hs.save.house.room);
+    b.onclick = () => goToRoom(i);
+    roomsNav.append(b);
+  });
+
   if (hs.selected && hs.selected.kind === 'item') {
     const it = hs.selected.ref;
     const f = FURNITURE_BY_ID[it.type];
@@ -747,9 +855,18 @@ function renderDrawer() {
   }
 
   if (hs.mode === 'meubles') {
-    drawer.append(hsEl('p', 'drawer-hint', 'Touche un meuble pour l’ajouter, puis fais-le glisser où tu veux. Pose ton personnage sur un canapé, un fauteuil ou un lit pour qu’il s’assoie.'));
+    drawer.append(hsEl('p', 'drawer-hint', 'Touche un meuble pour l’ajouter, puis fais-le glisser où tu veux. Pose ton personnage sur un canapé, un lit, une chaise… pour qu’il s’assoie.'));
+    if (!hs.cat) hs.cat = h.cat;
+    const cats = hsEl('div', 'cr-choices');
+    for (const [id, label] of CATEGORIES) {
+      const b = hsEl('button', 'chip', label);
+      b.setAttribute('aria-pressed', hs.cat === id);
+      b.onclick = () => { hs.cat = id; renderDrawer(); };
+      cats.append(b);
+    }
+    drawer.append(cats);
     const grid = hsEl('div', 'cr-choices');
-    for (const f of FURNITURE) {
+    for (const f of FURNITURE.filter((f) => f.cat === hs.cat)) {
       const b = hsEl('button', 'item-btn');
       b.append(thumb((ctx) => f.draw(ctx, 0, 0, f.colors[0], 0), f.w, f.h), hsEl('span', null, f.name));
       b.onclick = () => {
@@ -765,11 +882,16 @@ function renderDrawer() {
     }
     drawer.append(grid);
   } else if (hs.mode === 'murs') {
-    const brick = hsEl('button', 'chip', h.wallStyle === 'briques' ? 'Briques : oui' : 'Briques : non');
-    brick.setAttribute('aria-pressed', h.wallStyle === 'briques');
-    brick.onclick = () => { h.wallStyle = h.wallStyle === 'briques' ? 'uni' : 'briques'; writeSave(hs.save); renderDrawer(); };
-    drawer.append(swatchRow('Murs', WALL_COLORS, h.wall, (c) => { h.wall = c; writeSave(hs.save); renderDrawer(); }, brick));
-    drawer.append(swatchRow('Sol', FLOOR_COLORS, h.floor, (c) => { h.floor = c; writeSave(hs.save); renderDrawer(); }));
+    if (!h.outdoor) {
+      const brick = hsEl('button', 'chip', h.wallStyle === 'briques' ? 'Briques : oui' : 'Briques : non');
+      brick.setAttribute('aria-pressed', h.wallStyle === 'briques');
+      brick.onclick = () => { h.wallStyle = h.wallStyle === 'briques' ? 'uni' : 'briques'; writeSave(hs.save); renderDrawer(); };
+      drawer.append(swatchRow('Murs', WALL_COLORS, h.wall, (c) => { h.wall = c; writeSave(hs.save); renderDrawer(); }, brick));
+    }
+    const tiles = hsEl('button', 'chip', h.floorStyle === 'carrelage' ? 'Carrelage : oui' : 'Carrelage : non');
+    tiles.setAttribute('aria-pressed', h.floorStyle === 'carrelage');
+    tiles.onclick = () => { h.floorStyle = h.floorStyle === 'carrelage' ? 'parquet' : 'carrelage'; writeSave(hs.save); renderDrawer(); };
+    drawer.append(swatchRow('Sol', FLOOR_COLORS, h.floor, (c) => { h.floor = c; writeSave(hs.save); renderDrawer(); }, tiles));
   } else if (hs.mode === 'animal') {
     renderPetPanel(drawer);
   }
